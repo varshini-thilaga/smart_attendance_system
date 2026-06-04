@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Class {{ class_name }}-{{ section }}{% endblock %}
+{% block page_title %}Class {{ class_name }} — Section {{ section }}{% endblock %}
+{% block sidebar %}
+<span class="sb-section">Overview</span>
+<a href="/admin" class="sb-item"><i class="fas fa-th-large"></i>Dashboard</a>
+<span class="sb-section">Attendance</span>
+<a href="/admin/classes" class="sb-item active"><i class="fas fa-school"></i>All Classes</a>
+<a href="/admin/attendance" class="sb-item"><i class="fas fa-calendar-check"></i>Attendance Records</a>
+<span class="sb-section">Students</span>
+<a href="/admin/students" class="sb-item"><i class="fas fa-user-graduate"></i>All Students</a>
+{% endblock %}
+{% block content %}
+<!-- Header bar -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="/admin/classes" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i>Back</a>
+    <div>
+      <h3 style="font-size:16px;font-weight:600">Class {{ class_name }} — Section {{ section }}</h3>
+      <p style="font-size:12px;color:var(--muted)">{{ students|length }} students enrolled</p>
+    </div>
+  </div>
+  {% if excel_exists %}
+  <a href="/admin/excel/{{ class_name }}/{{ section }}" class="btn btn-success"><i class="fas fa-file-excel"></i>Download Excel</a>
+  {% else %}
+  <span class="btn btn-outline btn-sm" style="opacity:.5;cursor:not-allowed"><i class="fas fa-file-excel"></i>No Excel Yet</span>
+  {% endif %}
+</div>
+
+<!-- Stats row -->
+<div class="stat-grid" style="margin-bottom:20px;">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-users"></i></div>
+    <div class="stat-info"><p>{{ students|length }}</p><span>Students</span></div>
+  </div>
+  <div class="stat-card teal">
+    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+    <div class="stat-info"><p>{{ records|length }}</p><span>Attendance Entries</span></div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+    <div class="stat-info">
+      <p>{% if date_summaries %}{{ date_summaries|length }}{% else %}0{% endif %}</p>
+      <span>Days Recorded</span>
+    </div>
+  </div>
+</div>
+
+<!-- Date-wise Summary -->
+{% if date_summaries %}
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-chart-bar" style="color:var(--teal)"></i>Date-wise Summary</h3>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Total</th><th>FN Present</th><th>FN Absent</th><th>AN Present</th><th>AN Absent</th></tr>
+      </thead>
+      <tbody>
+        {% for d in date_summaries %}
+        <tr>
+          <td style="font-weight:500">{{ d.date }}</td>
+          <td><span class="badge badge-fn">{{ d.total }}</span></td>
+          <td><span class="badge badge-p">{{ d.fn_present }}</span></td>
+          <td><span class="badge badge-ab">{{ d.fn_absent }}</span></td>
+          <td><span class="badge badge-p">{{ d.an_present }}</span></td>
+          <td><span class="badge badge-ab">{{ d.an_absent }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Attendance Table -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-table" style="color:var(--primary)"></i>Attendance Records</h3>
+    <span style="font-size:12px;color:var(--muted)">Read-only · Auto-updated</span>
+  </div>
+  {% if records %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Roll No</th>
+          <th>Name</th>
+          <th>Date</th>
+          <th>FN</th>
+          <th>AN</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td style="font-weight:500;color:var(--muted)">{{ r.roll_no }}</td>
+          <td><strong>{{ r.name }}</strong></td>
+          <td style="color:var(--muted);font-size:12px">{{ r.date }}</td>
+          <td><span class="badge {% if r.fn_status=='P' %}badge-p{% else %}badge-ab{% endif %}">{{ r.fn_status }}</span></td>
+          <td><span class="badge {% if r.an_status=='P' %}badge-p{% else %}badge-ab{% endif %}">{{ r.an_status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:48px;color:var(--muted)">
+    <i class="fas fa-calendar-xmark" style="font-size:36px;margin-bottom:12px;display:block;opacity:.3"></i>
+    No attendance records yet for this class.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

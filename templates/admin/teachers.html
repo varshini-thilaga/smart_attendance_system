@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Teachers{% endblock %}
+{% block page_title %}Manage Teachers{% endblock %}
+{% block sidebar %}
+<a href="/admin" class="nav-item"><i class="fas fa-th-large"></i> Dashboard</a>
+<a href="/admin/teachers" class="nav-item active"><i class="fas fa-users"></i> Teachers</a>
+<a href="/admin/students" class="nav-item"><i class="fas fa-user-graduate"></i> Students</a>
+<a href="/admin/attendance" class="nav-item"><i class="fas fa-calendar-check"></i> Attendance</a>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h3>All Users</h3>
+    <a href="/signup" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add User</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Class</th><th>Section</th><th>Joined</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for t in teachers %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ t.full_name }}</strong></td>
+          <td>{{ t.email }}</td>
+          <td>
+            {% if t.role == 'teacher' %}<span class="badge-role badge-teacher">Teacher</span>
+            {% elif t.role == 'class_teacher' %}<span class="badge-role badge-ct">Class Teacher</span>
+            {% else %}<span class="badge-role badge-admin">Admin</span>{% endif %}
+          </td>
+          <td>{{ t.class_name or '—' }}</td>
+          <td>{{ t.section or '—' }}</td>
+          <td style="color:var(--text-muted);font-size:12px;">{{ t.created_at[:10] if t.created_at else '—' }}</td>
+          <td>
+            <form method="POST" action="/admin/delete_teacher/{{ t.id }}" style="display:inline;" onsubmit="return confirm('Delete?')">
+              <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

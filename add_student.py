@@ -1,69 +1,67 @@
-import cv2                                                                      # openCV
-import numpy as np                                                              # for numpy arrays
+import cv2
+import numpy as np
 import sqlite3
-import dlib
-import os                                                                       # for creating folders
+import os
+import shutil
+from PyQt5.QtWidgets import QApplication, QFileDialog
+import sys
 
-cap = cv2.VideoCapture(1)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 512)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 512)
-#cap.set(6, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
-
-detector = dlib.get_frontal_face_detector()
-
-def insertOrUpdate(Id, Name, roll) :                                            # this function is for database
-    connect = sqlite3.connect("Face-DataBase")                                  # connecting to the database
-    cmd = "SELECT * FROM Students WHERE ID = " + Id                             # selecting the row of an id into consideration
+def insertOrUpdate(Id, Name, roll):
+    connect = sqlite3.connect("Face-DataBase")
+    cmd = "SELECT * FROM Students WHERE ID = " + str(Id)
     cursor = connect.execute(cmd)
     isRecordExist = False
-
-    for row in cursor:                                                          # checking wheather the id exist or not
+    for row in cursor:
         isRecordExist = True
-# print(isRecordExist)
 
-    if isRecordExist == True:  
-        print("record is updated")                                                # updating name and roll no
-        connect.execute("UPDATE Students SET Name = ? WHERE ID = ?",(Name, Id))
-        connect.execute("UPDATE Students SET Roll = ? WHERE ID = ?",(roll, Id))
+    if isRecordExist:
+        connect.execute("UPDATE Students SET Name = ? WHERE ID = ?", (Name, Id))
+        connect.execute("UPDATE Students SET Roll = ? WHERE ID = ?", (roll, Id))
     else:
-        print("record is entered")
-        params = (Id, Name, roll)                                               # insering a new student data
+        params = (Id, Name, roll)
         connect.execute("INSERT INTO Students(ID, Name, Roll) VALUES(?, ?, ?)", params)
-    connect.commit()                                                            # commiting into the database
-    connect.close()                                                             # closing the connection
-
-name = input("Enter student's name : ")
-roll = input("Enter student's Roll Number : ")
-Id = roll[-2:]
-insertOrUpdate(Id, name, roll)                                                  # calling the sqlite3 database
+    connect.commit()
+    connect.close()
 
 
-folderName = "user" + Id                                                        # creating the person or user folder
-folderPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset/"+folderName)
-if not os.path.exists(folderPath):
-    os.makedirs(folderPath)
+def init_db():
+    connect = sqlite3.connect("Face-DataBase")
+    connect.execute("""CREATE TABLE IF NOT EXISTS Students (
+        ID INTEGER PRIMARY KEY,
+        Name TEXT,
+        Roll TEXT,
+        personID TEXT
+    )""")
+    connect.commit()
+    connect.close()
 
-sampleNum = 0
 
+if __name__ == "__main__":
+    init_db()
 
+    name = sys.argv[1] if len(sys.argv) > 1 else input("Enter student's name: ")
+    roll = sys.argv[2] if len(sys.argv) > 2 else input("Enter student's Roll Number: ")
+    Id = roll[-3:]
 
-while(True):
-    ret, img = cap.read()                                                       # reading the camera input
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)                                # Converting to GrayScale
-    dets = detector(img, 1)
-    for i, d in enumerate(dets):                                                # loop will run for each face detected
-        sampleNum += 1
-        cv2.imwrite(folderPath + "/User." + Id + "." + str(sampleNum) + ".jpg",
-                    img[d.top():d.bottom(), d.left():d.right()],
-                    [int(cv2.IMWRITE_JPEG_QUALITY), 1000000])                                            # Saving the faces
-        size = img.shape
-        print(size)
-        cv2.rectangle(img, (d.left(), d.top())  ,(d.right(), d.bottom()),(0,255,0) ,2) # Forming the rectangle
-        cv2.waitKey(200)                                                        # waiting time of 200 milisecond
-    cv2.imshow('frame', img)                                                    # showing the video input from camera on window
-    cv2.waitKey(1)
-    if(sampleNum >= 20):                                                        # will take 20 faces
-        break
+    insertOrUpdate(Id, name, roll)
 
-cap.release()                                                                   # turning the webcam off
-cv2.destroyAllWindows()                                                         # Closing all the opened windows
+    folderPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset", "user" + Id)
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
+
+    # Use file dialog to select images instead of webcam
+    app = QApplication(sys.argv)
+    files, _ = QFileDialog.getOpenFileNames(None, "Select Student Face Images (select multiple)", "", "Images (*.jpg *.jpeg *.png)")
+    app.quit()
+
+    if not files:
+        print("No images selected.")
+        sys.exit()
+
+    for i, f in enumerate(files[:20]):
+        dest = os.path.join(folderPath, f"User.{Id}.{i+1}.jpg")
+        img = cv2.imread(f)
+        cv2.imwrite(dest, img)
+        print(f"Saved image {i+1}")
+
+    print(f"Enrolled {min(len(files), 20)} images for {name}")

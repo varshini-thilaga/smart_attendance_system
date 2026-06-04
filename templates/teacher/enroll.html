@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Enroll Student{% endblock %}
+{% block page_title %}Enroll Student{% endblock %}
+{% block sidebar %}
+<a href="/teacher" class="nav-item"><i class="fas fa-th-large"></i> Dashboard</a>
+<a href="/teacher/mark" class="nav-item"><i class="fas fa-camera"></i> Mark Attendance</a>
+<a href="/teacher/enroll" class="nav-item active"><i class="fas fa-user-plus"></i> Enroll Student</a>
+{% endblock %}
+{% block content %}
+{% if success %}<div class="alert alert-success"><i class="fas fa-check-circle"></i> {{ success }}</div>{% endif %}
+{% if error %}<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>{% endif %}
+<div class="card">
+  <div class="card-header"><h3><i class="fas fa-user-plus" style="color:var(--primary);margin-right:8px;"></i>Enroll New Student</h3></div>
+  <form method="POST" enctype="multipart/form-data">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Student Name</label>
+        <input type="text" name="name" class="form-control" placeholder="Full name" required/>
+      </div>
+      <div class="form-group">
+        <label>Roll Number</label>
+        <input type="text" name="roll_no" class="form-control" placeholder="e.g. 101" required/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Class Name</label>
+        <input type="text" name="class_name" class="form-control" placeholder="e.g. Class 10" required/>
+      </div>
+      <div class="form-group">
+        <label>Section</label>
+        <input type="text" name="section" class="form-control" placeholder="e.g. A" required/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Face Photos (select multiple clear photos)</label>
+      <div class="upload-area" onclick="document.getElementById('photos').click()">
+        <i class="fas fa-images"></i>
+        <p>Click to select face photos</p>
+        <p><span>Select 3-5 clear front-facing photos</span></p>
+        <p id="fcount" style="margin-top:8px;font-size:12px;color:var(--primary);"></p>
+      </div>
+      <input type="file" id="photos" name="photos" accept="image/*" multiple style="display:none;" onchange="document.getElementById('fcount').textContent=this.files.length+' file(s) selected'" required/>
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus"></i> Enroll Student</button>
+  </form>
+</div>
+<div class="alert alert-info" style="margin-top:20px;"><i class="fas fa-lightbulb"></i> After enrolling all students, go to <strong>Mark Attendance</strong> and the system will auto-train when needed.</div>
+{% endblock %}

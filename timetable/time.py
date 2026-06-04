@@ -26,7 +26,7 @@ class MyTable(QTableWidget):
 
     def open_sheet(self):
         self.check_change = False
-        path = '/home/suyash/PycharmProjects/guitutorials/final_gui_demo/time_table.csv'
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'time_table.csv')
         if path != '':
             with open(path, newline='') as csv_file:
                 self.setRowCount(0)
@@ -43,7 +43,7 @@ class MyTable(QTableWidget):
         self.check_change = True
 
     def save_sheet(self):
-        path = '/home/suyash/PycharmProjects/guitutorials/final_gui_demo/time_table.csv'
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'time_table.csv')
         if path != '':
             with open(path, 'w') as csv_file:
                 writer = csv.writer(csv_file, dialect='excel')

@@ -1,64 +1,45 @@
 from openpyxl import Workbook, load_workbook
-from openpyxl.cell import Cell
-from openpyxl.utils import get_column_letter, column_index_from_string
-
+from openpyxl.utils import get_column_letter
 import os
 import sqlite3
 import pandas as pd
-from datetime import datetime,timedelta
-import shutil
-from datetime import date,time
-#database connection
-conn = sqlite3.connect('Face-DataBase')
+from datetime import datetime, date
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "Face-DataBase")
+
+conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
-#get current date
-now=datetime.now()
-current_day=date.today().weekday()
-currentdate=now.strftime("%d_%m_%y")
+now = datetime.now()
+current_day = date.today().weekday()
+currentdate = now.strftime("%d_%m_%y")
 
-data=pd.read_csv("time_table (copy).csv")
-currenttime=now.strftime("%H:%M")
+timetable_path = os.path.join(BASE_DIR, "time_table.csv")
+if not os.path.exists(timetable_path):
+    print("time_table.csv not found.")
+    exit()
 
-periods=data.values[current_day+1][1:]
-if not os.path.exists(currentdate):
-    os.makedirs(currentdate)
-period_path="./"+currentdate+"/"
+data = pd.read_csv(timetable_path)
+periods = data.values[current_day + 1][1:]
 
-for i in periods:
-    if not os.path.exists(period_path+i):
-        os.makedirs(period_path+i)
+out_dir = os.path.join(BASE_DIR, currentdate)
+os.makedirs(out_dir, exist_ok=True)
 
-for folder in os.listdir("./"+currentdate+"/"):
-    if(os.path.exists('./'+currentdate+"/"+folder+"/"+folder+"_"+currentdate+".xlsx")):
-        wb = load_workbook('./'+currentdate+"/"+folder+"/"+folder+"_"+currentdate+".xlsx")
-        sheet = wb['Cse16']
-        # sheet[ord() + '1']
-        for col_index in range(1, 100):
-            col = get_column_letter(col_index)
-            if sheet.cell(row = 1, column = 1).value is None:
-                col2 = get_column_letter(col_index - 1)
-                # print sheet.cell('%s%s'% (col2, 1)).value
-                if sheet.cell('%s%s' % (col2,1)).value != "I":
-                    sheet['%s%s' % (col,1)] = "I"
-                break
+for subject in periods:
+    subject_dir = os.path.join(out_dir, str(subject))
+    os.makedirs(subject_dir, exist_ok=True)
+    out_file = os.path.join(subject_dir, f"{subject}_{currentdate}.xlsx")
 
-        #saving the file
-        wb.save("./"+currentdate+"/"+folder+"/"+folder+"_"+currentdate+".xlsx")
-
-    else:
+    if not os.path.exists(out_file):
         wb = Workbook()
-        dest_filename = folder+"_"+currentdate
-        #path="./"+currentdate+"/"+folder+"/"
-        c.execute("SELECT * FROM Students ORDER BY Roll ASC")
-        ws1 = wb.active
-        ws1.title = "Cse16"
-        ws1.append(('Roll Number', 'Name', 'I','II','III','IV','V','Final'))
-        ws1.append(('', '', '','','','','',''))
-        while True:
-            a = c.fetchone()
-            if a == None:
-                break
-            else:
-                ws1.append((a[2], a[1]))
-        wb.save("./"+currentdate+"/"+folder+"/"+dest_filename+".xlsx")
+        ws = wb.active
+        ws.title = str(subject)
+        ws.append(["Roll Number", "Name", "Status"])
+        c.execute("SELECT Roll, Name FROM Students ORDER BY Roll ASC")
+        for row in c.fetchall():
+            ws.append([row[0], row[1], "Absent"])
+        wb.save(out_file)
+        print(f"Created: {out_file}")
+
+conn.close()

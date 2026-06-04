@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Mark Attendance{% endblock %}
+{% block page_title %}Mark Attendance{% endblock %}
+{% block sidebar %}
+<a href="/ct" class="sb-item"><i class="fas fa-th-large"></i>Dashboard</a>
+<a href="/ct/enroll" class="sb-item"><i class="fas fa-user-plus"></i>Enroll Students</a>
+<a href="/ct/train" class="sb-item"><i class="fas fa-brain"></i>Train Model</a>
+<a href="/ct/mark" class="sb-item active"><i class="fas fa-camera"></i>Mark Attendance</a>
+<a href="/ct/attendance" class="sb-item"><i class="fas fa-list-check"></i>View & Edit</a>
+<a href="/ct/excel" class="sb-item"><i class="fas fa-file-excel"></i>Download Excel</a>
+<a href="/ct/timetable" class="sb-item"><i class="fas fa-calendar-days"></i>Timetable</a>
+{% endblock %}
+{% block extra_css %}
+<style>
+.tab-btns { display:flex; gap:0; margin-bottom:20px; border:1px solid var(--border); border-radius:8px; overflow:hidden; width:fit-content; }
+.tab-btn { padding:9px 20px; font-size:13px; font-weight:500; cursor:pointer; border:none; background:#fff; color:var(--muted); font-family:'Inter',sans-serif; transition:.2s; }
+.tab-btn.active { background:var(--primary); color:#fff; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+#cameraPreview { width:100%; max-width:480px; border-radius:10px; border:2px solid var(--border); display:none; }
+#capturedImg { width:100%; max-width:480px; border-radius:10px; border:2px solid var(--success); display:none; margin-top:10px; }
+.cam-btns { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+</style>
+{% endblock %}
+{% block content %}
+
+{% if success %}
+<div class="alert alert-success">
+  <i class="fas fa-check-circle"></i>
+  Attendance marked for <strong>{{ date }}</strong> ({{ session_type }})!
+  Detected <strong>{{ detected }}</strong> faces — <strong>{{ present|length }}</strong> recognized.
+</div>
+{% if summary %}
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px">
+  <div style="background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.07);border-top:3px solid var(--primary)">
+    <p style="font-size:20px;font-weight:700">{{ summary.total }}</p><span style="font-size:11px;color:var(--muted)">Total</span>
+  </div>
+  <div style="background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.07);border-top:3px solid var(--teal)">
+    <p style="font-size:20px;font-weight:700;color:var(--teal)">{{ summary.fn_present }}</p><span style="font-size:11px;color:var(--muted)">FN Present</span>
+  </div>
+  <div style="background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.07);border-top:3px solid var(--danger)">
+    <p style="font-size:20px;font-weight:700;color:var(--danger)">{{ summary.fn_absent }}</p><span style="font-size:11px;color:var(--muted)">FN Absent</span>
+  </div>
+  <div style="background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.07);border-top:3px solid var(--teal)">
+    <p style="font-size:20px;font-weight:700;color:var(--teal)">{{ summary.an_present }}</p><span style="font-size:11px;color:var(--muted)">AN Present</span>
+  </div>
+  <div style="background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.07);border-top:3px solid var(--danger)">
+    <p style="font-size:20px;font-weight:700;color:var(--danger)">{{ summary.an_absent }}</p><span style="font-size:11px;color:var(--muted)">AN Absent</span>
+  </div>
+</div>
+{% endif %}
+{% if present %}
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header"><h3><i class="fas fa-check-circle" style="color:var(--success)"></i>Present ({{ present|length }})</h3>
+    <a href="/ct/attendance?date={{ date }}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i>View Records</a>
+  </div>
+  <div class="tag-list">{% for n in present %}<span class="tag">{{ n }}</span>{% endfor %}</div>
+</div>
+{% endif %}
+{% endif %}
+{% if error %}<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>{% endif %}
+
+<div class="card" style="max-width:620px">
+  <div class="card-header"><h3><i class="fas fa-camera" style="color:var(--orange)"></i>Mark Attendance</h3></div>
+
+  <!-- Input Mode Tabs -->
+  <div class="tab-btns">
+    <button class="tab-btn active" onclick="switchTab('upload')"><i class="fas fa-upload"></i> Upload Photo</button>
+    <button class="tab-btn" onclick="switchTab('camera')"><i class="fas fa-camera"></i> Use Camera</button>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" id="markForm">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" name="date" id="markDate" class="form-control" required/>
+      </div>
+      <div class="form-group">
+        <label>Session</label>
+        <select name="session_type" class="form-control">
+          <option value="FN">FN — Forenoon</option>
+          <option value="AN">AN — Afternoon</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Upload Tab -->
+    <div id="tab-upload" class="tab-content active">
+      <div class="form-group">
+        <label>Class Group Photo</label>
+        <div class="upload-area" onclick="document.getElementById('photo').click()">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Click to upload class photo</p>
+          <p class="highlight" id="fname">No file selected</p>
+        </div>
+        <input type="file" id="photo" name="photo" accept="image/*" style="display:none"
+               onchange="document.getElementById('fname').textContent=this.files[0].name"/>
+      </div>
+    </div>
+
+    <!-- Camera Tab -->
+    <div id="tab-camera" class="tab-content">
+      <div class="form-group">
+        <label>Capture Class Photo</label>
+        <video id="cameraPreview" autoplay playsinline></video>
+        <img id="capturedImg" alt="Captured"/>
+        <input type="hidden" name="camera_image" id="cameraImageData"/>
+        <div class="cam-btns">
+          <button type="button" class="btn btn-primary" id="startCamBtn" onclick="startCamera()">
+            <i class="fas fa-video"></i>Open Camera
+          </button>
+          <button type="button" class="btn btn-teal" id="captureBtn" onclick="capturePhoto()" style="display:none">
+            <i class="fas fa-camera"></i>Capture
+          </button>
+          <button type="button" class="btn btn-outline" id="retakeBtn" onclick="retakePhoto()" style="display:none">
+            <i class="fas fa-redo"></i>Retake
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px">
+      <i class="fas fa-magic"></i>Process & Mark Attendance
+    </button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('markDate').value = new Date().toISOString().split('T')[0];
+
+let stream = null;
+let activeTab = 'upload';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='upload')||(i===1&&tab==='camera')));
+  document.getElementById('tab-upload').classList.toggle('active', tab==='upload');
+  document.getElementById('tab-camera').classList.toggle('active', tab==='camera');
+  if (tab !== 'camera' && stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+}
+
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    const video = document.getElementById('cameraPreview');
+    video.srcObject = stream;
+    video.style.display = 'block';
+    document.getElementById('startCamBtn').style.display = 'none';
+    document.getElementById('captureBtn').style.display = 'inline-flex';
+  } catch(e) {
+    alert('Camera access denied or not available: ' + e.message);
+  }
+}
+
+function capturePhoto() {
+  const video = document.getElementById('cameraPreview');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  document.getElementById('cameraImageData').value = dataUrl;
+  document.getElementById('capturedImg').src = dataUrl;
+  document.getElementById('capturedImg').style.display = 'block';
+  video.style.display = 'none';
+  document.getElementById('captureBtn').style.display = 'none';
+  document.getElementById('retakeBtn').style.display = 'inline-flex';
+  if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+}
+
+function retakePhoto() {
+  document.getElementById('capturedImg').style.display = 'none';
+  document.getElementById('cameraImageData').value = '';
+  document.getElementById('retakeBtn').style.display = 'none';
+  document.getElementById('startCamBtn').style.display = 'inline-flex';
+}
+
+document.getElementById('markForm').addEventListener('submit', async function(e) {
+  const camData = document.getElementById('cameraImageData').value;
+  if (activeTab === 'camera' && camData) {
+    e.preventDefault();
+    // Save camera image then submit
+    const res = await fetch('/ct/mark/camera', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({image: camData})
+    });
+    const data = await res.json();
+    if (data.success) {
+      // Create a file input with the camera image and submit
+      const blob = await (await fetch(camData)).blob();
+      const file = new File([blob], 'camera_capture.jpg', {type:'image/jpeg'});
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('photo').files = dt.files;
+      this.submit();
+    }
+  }
+});
+</script>
+{% endblock %}

@@ -1,18 +1,15 @@
-import cognitive_face as CF
-from global_variables import personGroupId
-import sys
+import sqlite3
 
-Key = '17122c4be3214178ab93127fad066013'
-BASE_URL = 'https://centralindia.api.cognitive.microsoft.com/face/v1.0/'
-
-CF.Key.set(Key)
-CF.BaseUrl.set(BASE_URL)
-
-personGroups = CF.person_group.lists()
-for personGroup in personGroups:
-    if personGroupId == personGroup['personGroupId']:
-        print(personGroupId + " already exists.")
-        sys.exit()
-
-res = CF.person_group.create(personGroupId)
-print(res)
+connect = sqlite3.connect("Face-DataBase")
+connect.execute("""CREATE TABLE IF NOT EXISTS Students (
+    ID INTEGER PRIMARY KEY,
+    Name TEXT,
+    Roll TEXT,
+    personID TEXT
+)""")
+connect.execute("""CREATE TABLE IF NOT EXISTS TrainLog (
+    trained_at TEXT
+)""")
+connect.commit()
+connect.close()
+print("Database initialized successfully.")

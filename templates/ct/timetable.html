@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Timetable{% endblock %}
+{% block page_title %}Timetable Management{% endblock %}
+{% block sidebar %}
+<a href="/ct" class="sb-item"><i class="fas fa-th-large"></i>Dashboard</a>
+<a href="/ct/enroll" class="sb-item"><i class="fas fa-user-plus"></i>Enroll Students</a>
+<a href="/ct/train" class="sb-item"><i class="fas fa-brain"></i>Train Model</a>
+<a href="/ct/mark" class="sb-item"><i class="fas fa-camera"></i>Mark Attendance</a>
+<a href="/ct/attendance" class="sb-item"><i class="fas fa-list-check"></i>View & Edit</a>
+<a href="/ct/excel" class="sb-item"><i class="fas fa-file-excel"></i>Download Excel</a>
+<a href="/ct/timetable" class="sb-item active"><i class="fas fa-calendar-days"></i>Timetable</a>
+{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:20px;">
+  <div class="card" style="margin-bottom:0">
+    <div class="card-header"><h3><i class="fas fa-plus" style="color:var(--primary)"></i>Add Entry</h3></div>
+    <form method="POST">
+      <div class="form-group">
+        <label>Day</label>
+        <select name="day" class="form-control">
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option><option>Saturday</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <input type="text" name="subject" class="form-control" placeholder="e.g. Mathematics" required/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Time</label>
+          <input type="time" name="start_time" class="form-control" required/>
+        </div>
+        <div class="form-group">
+          <label>End Time</label>
+          <input type="time" name="end_time" class="form-control" required/>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%"><i class="fas fa-plus"></i>Add to Timetable</button>
+    </form>
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <div class="card-header"><h3><i class="fas fa-calendar-days" style="color:var(--teal)"></i>Schedule</h3></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Day</th><th>Subject</th><th>Time</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for e in entries %}
+          <tr>
+            <td><strong>{{ e.day }}</strong></td>
+            <td>{{ e.subject }}</td>
+            <td style="color:var(--muted);font-size:12px">{{ e.start_time }} — {{ e.end_time }}</td>
+            <td>
+              <form method="POST" action="/ct/timetable/delete/{{ e.id }}" style="display:inline" onsubmit="return confirm('Delete?')">
+                <button class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">No timetable entries yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

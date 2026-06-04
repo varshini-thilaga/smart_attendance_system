@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block sidebar %}
+<span class="sb-section">Overview</span>
+<a href="/admin" class="sb-item active"><i class="fas fa-th-large"></i>Dashboard</a>
+<span class="sb-section">Attendance</span>
+<a href="/admin/classes" class="sb-item"><i class="fas fa-school"></i>All Classes</a>
+<a href="/admin/attendance" class="sb-item"><i class="fas fa-calendar-check"></i>Attendance Records</a>
+<span class="sb-section">Students</span>
+<a href="/admin/students" class="sb-item"><i class="fas fa-user-graduate"></i>All Students</a>
+{% endblock %}
+{% block content %}
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-school"></i></div>
+    <div class="stat-info"><p>{{ classes|length }}</p><span>Total Classes</span></div>
+  </div>
+  <div class="stat-card teal">
+    <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
+    <div class="stat-info"><p>{{ s_count }}</p><span>Total Students</span></div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+    <div class="stat-info"><p>{{ a_count }}</p><span>Attendance Records</span></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <!-- Classes Summary -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-school" style="color:var(--primary)"></i>Today's Class Summary</h3>
+      <a href="/admin/classes" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Class</th><th>Sec</th><th>Students</th><th>FN Present</th><th>FN Absent</th><th>AN Present</th><th>AN Absent</th><th></th></tr></thead>
+        <tbody>
+          {% for c in class_summaries %}
+          <tr>
+            <td><strong>{{ c.class_name }}</strong></td>
+            <td>{{ c.section }}</td>
+            <td><span class="badge badge-fn">{{ c.student_count }}</span></td>
+            <td><span class="badge badge-p">{{ c.fn_present }}</span></td>
+            <td><span class="badge badge-ab">{{ c.fn_absent }}</span></td>
+            <td><span class="badge badge-p">{{ c.an_present }}</span></td>
+            <td><span class="badge badge-ab">{{ c.an_absent }}</span></td>
+            <td>
+              <a href="/admin/classes/{{ c.class_name }}/{{ c.section }}" class="btn btn-primary btn-xs"><i class="fas fa-eye"></i>View</a>
+              <a href="/admin/excel/{{ c.class_name }}/{{ c.section }}" class="btn btn-success btn-xs"><i class="fas fa-file-excel"></i>Excel</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No classes yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-clock" style="color:var(--orange)"></i>Recent Activity</h3>
+      <a href="/admin/attendance" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Student</th><th>Class</th><th>Date</th><th>FN</th><th>AN</th></tr></thead>
+        <tbody>
+          {% for r in recent %}
+          <tr>
+            <td><strong>{{ r.name }}</strong></td>
+            <td>{{ r.class_name }}-{{ r.section }}</td>
+            <td style="color:var(--muted);font-size:12px">{{ r.date }}</td>
+            <td><span class="badge {% if r.fn_status=='P' %}badge-p{% else %}badge-ab{% endif %}">{{ r.fn_status }}</span></td>
+            <td><span class="badge {% if r.an_status=='P' %}badge-p{% else %}badge-ab{% endif %}">{{ r.an_status }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No activity yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

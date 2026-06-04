@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Attendance Records{% endblock %}
+{% block page_title %}Attendance Records{% endblock %}
+{% block sidebar %}
+<span class="sb-section">Overview</span>
+<a href="/admin" class="sb-item"><i class="fas fa-th-large"></i>Dashboard</a>
+<span class="sb-section">Attendance</span>
+<a href="/admin/classes" class="sb-item"><i class="fas fa-school"></i>All Classes</a>
+<a href="/admin/attendance" class="sb-item active"><i class="fas fa-calendar-check"></i>Attendance Records</a>
+<span class="sb-section">Students</span>
+<a href="/admin/students" class="sb-item"><i class="fas fa-user-graduate"></i>All Students</a>
+{% endblock %}
+{% block content %}
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px">
+  <form method="GET" action="/admin/attendance">
+    <div class="form-row" style="align-items:flex-end">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Filter by Class</label>
+        <select name="class" class="form-control">
+          <option value="">All Classes</option>
+          {% for c in all_classes %}
+          <option value="{{ c.class_name }}" {% if class_filter==c.class_name %}selected{% endif %}>Class {{ c.class_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Filter by Date</label>
+        <input type="date" name="date" class="form-control" value="{{ date_filter }}"/>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i>Filter</button>
+        <a href="/admin/attendance" class="btn btn-outline">Clear</a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-calendar-check" style="color:var(--orange)"></i>Attendance Records</h3>
+    <span style="font-size:12px;color:var(--muted)">{{ records|length }} record(s) · Read-only</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Roll No</th><th>Name</th><th>Class</th><th>Section</th><th>Date</th><th>FN</th><th>AN</th></tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td style="color:var(--muted)">{{ r.roll_no }}</td>
+          <td><strong>{{ r.name }}</strong></td>
+          <td>{{ r.class_name }}</td>
+          <td>{{ r.section }}</td>
+          <td style="color:var(--muted);font-size:12px">{{ r.date }}</td>
+          <td><span class="badge {% if r.fn_status=='P' %}badge-p{% else %}badge-ab{% endif %}">{{ r.fn_status }}</span></td>
+          <td><span class="badge {% if r.an_status=='P' %}badge-p{% else %}badge-ab{% endif %}">{{ r.an_status }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No records found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

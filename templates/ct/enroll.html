@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Enroll Students{% endblock %}
+{% block page_title %}Enroll Students{% endblock %}
+{% block sidebar %}
+<a href="/ct" class="sb-item"><i class="fas fa-th-large"></i>Dashboard</a>
+<a href="/ct/enroll" class="sb-item active"><i class="fas fa-user-plus"></i>Enroll Students</a>
+<a href="/ct/train" class="sb-item"><i class="fas fa-brain"></i>Train Model</a>
+<a href="/ct/mark" class="sb-item"><i class="fas fa-camera"></i>Mark Attendance</a>
+<a href="/ct/attendance" class="sb-item"><i class="fas fa-list-check"></i>View & Edit</a>
+<a href="/ct/excel" class="sb-item"><i class="fas fa-file-excel"></i>Download Excel</a>
+<a href="/ct/timetable" class="sb-item"><i class="fas fa-calendar-days"></i>Timetable</a>
+{% endblock %}
+{% block extra_css %}
+<style>
+.tab-btns { display:flex; gap:0; margin-bottom:16px; border:1px solid var(--border); border-radius:8px; overflow:hidden; width:fit-content; }
+.tab-btn { padding:8px 18px; font-size:13px; font-weight:500; cursor:pointer; border:none; background:#fff; color:var(--muted); font-family:'Inter',sans-serif; transition:.2s; }
+.tab-btn.active { background:var(--primary); color:#fff; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+#camPreview { width:100%; border-radius:8px; border:2px solid var(--border); display:none; }
+#camCaptured { width:100%; border-radius:8px; border:2px solid var(--success); display:none; margin-top:8px; }
+.cam-count { background:var(--primary-light); color:var(--primary); padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; margin-top:8px; }
+</style>
+{% endblock %}
+{% block content %}
+{% if success %}<div class="alert alert-success"><i class="fas fa-check-circle"></i>{{ success }}</div>{% endif %}
+{% if error %}<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:20px">
+  <div class="card" style="margin-bottom:0">
+    <div class="card-header"><h3><i class="fas fa-user-plus" style="color:var(--primary)"></i>Add Student</h3></div>
+    <form method="POST" enctype="multipart/form-data" id="enrollForm">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="name" id="studentName" class="form-control" placeholder="Student full name" required/>
+      </div>
+      <div class="form-group">
+        <label>Roll Number</label>
+        <input type="text" name="roll_no" class="form-control" placeholder="e.g. 101" required/>
+      </div>
+
+      <div class="form-group">
+        <label>Face Photos</label>
+        <div class="tab-btns">
+          <button type="button" class="tab-btn active" onclick="switchEnrollTab('upload')">
+            <i class="fas fa-upload"></i> Upload
+          </button>
+          <button type="button" class="tab-btn" onclick="switchEnrollTab('camera')">
+            <i class="fas fa-camera"></i> Camera
+          </button>
+        </div>
+
+        <!-- Upload -->
+        <div id="etab-upload" class="tab-content active">
+          <div class="upload-area" onclick="document.getElementById('photos').click()">
+            <i class="fas fa-images"></i>
+            <p>Click to select 3–5 clear photos</p>
+            <p class="highlight" id="pcount">No files selected</p>
+          </div>
+          <input type="file" id="photos" name="photos" accept="image/*" multiple style="display:none"
+                 onchange="document.getElementById('pcount').textContent=this.files.length+' file(s) selected'"/>
+        </div>
+
+        <!-- Camera -->
+        <div id="etab-camera" class="tab-content">
+          <video id="camPreview" autoplay playsinline></video>
+          <img id="camCaptured" alt="Captured"/>
+          <div id="camCount" class="cam-count" style="display:none">0 photos captured</div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button type="button" class="btn btn-primary btn-sm" id="startEnrollCam" onclick="startEnrollCamera()">
+              <i class="fas fa-video"></i>Open Camera
+            </button>
+            <button type="button" class="btn btn-teal btn-sm" id="captureEnrollBtn" onclick="captureEnrollPhoto()" style="display:none">
+              <i class="fas fa-camera"></i>Capture
+            </button>
+            <button type="button" class="btn btn-success btn-sm" id="doneEnrollBtn" onclick="doneCapturing()" style="display:none">
+              <i class="fas fa-check"></i>Done (<span id="captureCount">0</span>)
+            </button>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-top:8px">Capture 3–5 photos from different angles</p>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%">
+        <i class="fas fa-user-plus"></i>Enroll Student
+      </button>
+    </form>
+    <div class="alert alert-info" style="margin-top:14px;margin-bottom:0">
+      <i class="fas fa-info-circle"></i>After enrolling all students, click <strong>Train Model</strong>.
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:0">
+    <div class="card-header">
+      <h3><i class="fas fa-users" style="color:var(--teal)"></i>Enrolled ({{ students|length }})</h3>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ s.name }}</strong></td>
+            <td>{{ s.roll_no }}</td>
+            <td>
+              <form method="POST" action="/ct/delete_student/{{ s.id }}" style="display:inline"
+                    onsubmit="return confirm('Delete student and all their data?')">
+                <button class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">No students enrolled yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let enrollStream = null;
+let capturedBlobs = [];
+let enrollActiveTab = 'upload';
+
+function switchEnrollTab(tab) {
+  enrollActiveTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='upload')||(i===1&&tab==='camera')));
+  document.getElementById('etab-upload').classList.toggle('active', tab==='upload');
+  document.getElementById('etab-camera').classList.toggle('active', tab==='camera');
+  if (tab !== 'camera' && enrollStream) { enrollStream.getTracks().forEach(t=>t.stop()); enrollStream=null; }
+}
+
+async function startEnrollCamera() {
+  try {
+    enrollStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+    document.getElementById('camPreview').srcObject = enrollStream;
+    document.getElementById('camPreview').style.display = 'block';
+    document.getElementById('camCaptured').style.display = 'none';
+    document.getElementById('startEnrollCam').style.display = 'none';
+    document.getElementById('captureEnrollBtn').style.display = 'inline-flex';
+    document.getElementById('doneEnrollBtn').style.display = 'inline-flex';
+  } catch(e) { alert('Camera error: ' + e.message); }
+}
+
+function captureEnrollPhoto() {
+  const video = document.getElementById('camPreview');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    capturedBlobs.push(blob);
+    document.getElementById('captureCount').textContent = capturedBlobs.length;
+    document.getElementById('camCount').textContent = capturedBlobs.length + ' photo(s) captured';
+    document.getElementById('camCount').style.display = 'inline-block';
+    // Show last captured
+    document.getElementById('camCaptured').src = URL.createObjectURL(blob);
+    document.getElementById('camCaptured').style.display = 'block';
+  }, 'image/jpeg', 0.9);
+}
+
+function doneCapturing() {
+  if (enrollStream) { enrollStream.getTracks().forEach(t=>t.stop()); enrollStream=null; }
+  document.getElementById('camPreview').style.display = 'none';
+  document.getElementById('captureEnrollBtn').style.display = 'none';
+}
+
+document.getElementById('enrollForm').addEventListener('submit', async function(e) {
+  if (enrollActiveTab === 'camera' && capturedBlobs.length > 0) {
+    e.preventDefault();
+    const dt = new DataTransfer();
+    capturedBlobs.forEach((blob, i) => {
+      dt.items.add(new File([blob], `capture_${i+1}.jpg`, {type:'image/jpeg'}));
+    });
+    document.getElementById('photos').files = dt.files;
+    this.submit();
+  }
+});
+</script>
+{% endblock %}

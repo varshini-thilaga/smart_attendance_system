@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Attendance Records{% endblock %}
+{% block page_title %}View & Edit Attendance{% endblock %}
+{% block sidebar %}
+<a href="/ct" class="sb-item"><i class="fas fa-th-large"></i>Dashboard</a>
+<a href="/ct/enroll" class="sb-item"><i class="fas fa-user-plus"></i>Enroll Students</a>
+<a href="/ct/train" class="sb-item"><i class="fas fa-brain"></i>Train Model</a>
+<a href="/ct/mark" class="sb-item"><i class="fas fa-camera"></i>Mark Attendance</a>
+<a href="/ct/attendance" class="sb-item active"><i class="fas fa-list-check"></i>View & Edit</a>
+<a href="/ct/excel" class="sb-item"><i class="fas fa-file-excel"></i>Download Excel</a>
+<a href="/ct/timetable" class="sb-item"><i class="fas fa-calendar-days"></i>Timetable</a>
+{% endblock %}
+{% block extra_css %}
+<style>
+.edit-row { display:none; background:#f8fafc; }
+.edit-row td { padding:12px 14px; }
+.filter-bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; background:#fff; padding:16px 20px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+.filter-bar label { font-size:13px; font-weight:500; color:var(--muted); }
+.summary-row { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:20px; }
+.sum-card { background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,0.07); text-align:center; }
+.sum-card p { font-size:20px; font-weight:700; }
+.sum-card span { font-size:11px; color:var(--muted); }
+</style>
+{% endblock %}
+{% block content %}
+
+<!-- Date Filter Bar -->
+<div class="filter-bar">
+  <label><i class="fas fa-calendar"></i> Select Date:</label>
+  <input type="date" id="dateFilter" class="form-control" style="width:180px" value="{{ date_filter }}"
+         onchange="window.location='/ct/attendance?date='+this.value"/>
+  <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;">
+    <a href="/ct/excel/date?date={{ date_filter }}" class="btn btn-success btn-sm">
+      <i class="fas fa-file-excel"></i>Download This Date
+    </a>
+    <a href="/ct/excel" class="btn btn-outline btn-sm">
+      <i class="fas fa-file-excel"></i>Full Excel
+    </a>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+{% if summary %}
+<div class="summary-row">
+  <div class="sum-card" style="border-top:3px solid var(--primary)">
+    <p>{{ summary.total }}</p><span>Total Students</span>
+  </div>
+  <div class="sum-card" style="border-top:3px solid var(--teal)">
+    <p style="color:var(--teal)">{{ summary.fn_present }}</p><span>FN Present</span>
+  </div>
+  <div class="sum-card" style="border-top:3px solid var(--danger)">
+    <p style="color:var(--danger)">{{ summary.fn_absent }}</p><span>FN Absent</span>
+  </div>
+  <div class="sum-card" style="border-top:3px solid var(--teal)">
+    <p style="color:var(--teal)">{{ summary.an_present }}</p><span>AN Present</span>
+  </div>
+  <div class="sum-card" style="border-top:3px solid var(--danger)">
+    <p style="color:var(--danger)">{{ summary.an_absent }}</p><span>AN Absent</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-list-check" style="color:var(--primary)"></i>
+      Attendance — {{ date_filter }}
+    </h3>
+    <div style="display:flex;gap:8px">
+      <a href="/ct/mark" class="btn btn-primary btn-sm"><i class="fas fa-camera"></i>Mark Now</a>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Roll No</th><th>Name</th>
+          <th>FN</th><th>AN</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr id="row-{{ r.id }}">
+          <td>{{ loop.index }}</td>
+          <td>{{ r.roll_no }}</td>
+          <td><strong>{{ r.name }}</strong></td>
+          <td><span class="badge {% if r.fn_status=='P' %}badge-p{% else %}badge-ab{% endif %}">{{ r.fn_status }}</span></td>
+          <td><span class="badge {% if r.an_status=='P' %}badge-p{% else %}badge-ab{% endif %}">{{ r.an_status }}</span></td>
+          <td style="display:flex;gap:6px">
+            <button class="btn btn-outline btn-xs" onclick="toggleEdit({{ r.id }})">
+              <i class="fas fa-edit"></i>Edit
+            </button>
+            <form method="POST" action="/ct/attendance/delete/{{ r.id }}" style="display:inline"
+                  onsubmit="return confirm('Delete this record?')">
+              <button class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        <tr class="edit-row" id="edit-{{ r.id }}">
+          <td colspan="6">
+            <form method="POST" action="/ct/attendance/edit/{{ r.id }}"
+                  style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+              <div>
+                <label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">Date</label>
+                <input type="date" name="date" value="{{ r.date }}" class="form-control" style="width:160px"/>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">FN</label>
+                <select name="fn_status" class="form-control" style="width:90px">
+                  <option value="P" {% if r.fn_status=='P' %}selected{% endif %}>P — Present</option>
+                  <option value="Ab" {% if r.fn_status=='Ab' %}selected{% endif %}>Ab — Absent</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">AN</label>
+                <select name="an_status" class="form-control" style="width:90px">
+                  <option value="P" {% if r.an_status=='P' %}selected{% endif %}>P — Present</option>
+                  <option value="Ab" {% if r.an_status=='Ab' %}selected{% endif %}>Ab — Absent</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i>Save</button>
+              <button type="button" class="btn btn-outline btn-sm" onclick="toggleEdit({{ r.id }})">Cancel</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" style="text-align:center;color:var(--muted);padding:40px">
+            <i class="fas fa-calendar-xmark" style="font-size:28px;margin-bottom:10px;display:block"></i>
+            No attendance records for {{ date_filter }}.
+            <br><a href="/ct/mark" style="color:var(--primary)">Mark attendance now →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Date History -->
+{% if all_dates %}
+<div class="card">
+  <div class="card-header"><h3><i class="fas fa-history" style="color:var(--muted)"></i>Date History</h3></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px">
+    {% for d in all_dates %}
+    <a href="/ct/attendance?date={{ d.date }}"
+       class="btn btn-sm {% if d.date == date_filter %}btn-primary{% else %}btn-outline{% endif %}">
+      {{ d.date }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+function toggleEdit(id) {
+  const row = document.getElementById('edit-' + id);
+  row.style.display = row.style.display === 'table-row' ? 'none' : 'table-row';
+}
+</script>
+{% endblock %}

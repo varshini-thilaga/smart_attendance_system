@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AttendEase — Student View</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<style>
+:root{
+  --teal:#0d9488;--teal-light:#f0fdfa;--teal-dark:#0f766e;
+  --success:#16a34a;--danger:#dc2626;--warning:#d97706;
+  --bg:#f8fafc;--sidebar:#0f172a;--sidebar-hover:rgba(255,255,255,0.08);
+  --card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,0.08);--shadow-md:0 4px 16px rgba(0,0,0,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:256px;background:var(--sidebar);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.sb-logo h1{color:#fff;font-size:20px;font-weight:700;}
+.sb-logo h1 span{color:#6ee7b7;}
+.sb-logo p{color:rgba(255,255,255,0.4);font-size:11px;margin-top:2px;}
+.sb-user{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px;}
+.sb-avatar{width:36px;height:36px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px;flex-shrink:0;}
+.sb-user-info p{color:#fff;font-size:13px;font-weight:500;}
+.sb-user-info span{color:rgba(255,255,255,0.4);font-size:11px;}
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto;}
+.sb-section{padding:10px 20px 4px;color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,0.6);text-decoration:none;font-size:13px;font-weight:500;transition:.2s;border-left:3px solid transparent;margin:1px 0;}
+.sb-item:hover,.sb-item.active{background:var(--sidebar-hover);color:#fff;border-left-color:#6ee7b7;}
+.sb-item i{width:16px;text-align:center;font-size:13px;}
+.sb-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.07);}
+.sb-footer a{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.5);text-decoration:none;font-size:13px;transition:.2s;}
+.sb-footer a:hover{color:#fff;}
+.main{margin-left:256px;flex:1;display:flex;flex-direction:column;}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:var(--shadow);}
+.topbar h2{font-size:17px;font-weight:600;}
+.role-badge{background:var(--teal-light);color:var(--teal);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;}
+.content{padding:24px 28px;flex:1;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;border-top:3px solid var(--teal);}
+.stat-card.danger{border-top-color:var(--danger);}
+.stat-card.warn{border-top-color:var(--warning);}
+.stat-card.green{border-top-color:var(--success);}
+.stat-icon{width:44px;height:44px;border-radius:10px;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--teal);flex-shrink:0;}
+.stat-card.danger .stat-icon{background:#fef2f2;color:var(--danger);}
+.stat-card.warn .stat-icon{background:#fffbeb;color:var(--warning);}
+.stat-card.green .stat-icon{background:#f0fdf4;color:var(--success);}
+.stat-info p{font-size:22px;font-weight:700;}
+.stat-info span{font-size:12px;color:var(--muted);}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.card-header h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{background:#f8fafc;padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafafa;}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-p{background:#dcfce7;color:#15803d;}
+.badge-ab{background:#fee2e2;color:#b91c1c;}
+.pct-high{background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+.pct-mid{background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+.pct-low{background:#fee2e2;color:#b91c1c;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer;border:none;text-decoration:none;transition:.2s;font-family:'Inter',sans-serif;}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-teal:hover{background:var(--teal-dark);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#15803d;}
+.btn-outline{background:transparent;color:var(--teal);border:1px solid var(--teal);}
+.btn-outline:hover{background:var(--teal);color:#fff;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.filter-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;background:#fff;padding:16px 20px;border-radius:12px;box-shadow:var(--shadow);}
+.filter-bar label{font-size:13px;font-weight:500;color:var(--muted);}
+.form-control{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);background:#fff;outline:none;transition:.2s;}
+.form-control:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,0.1);}
+.alert-info{background:#f0fdfa;color:#134e4a;border:1px solid #99f6e4;padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+@media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;}.stat-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sb-logo">
+    <h1>Attend<span>Ease</span></h1>
+    <p>Student Portal</p>
+  </div>
+  <div class="sb-user">
+    <div class="sb-avatar"><i class="fas fa-user-graduate" style="font-size:15px"></i></div>
+    <div class="sb-user-info">
+      <p>Class {{ class_name }} — {{ section }}</p>
+      <span>Year {{ year }}</span>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <span class="sb-section">Attendance</span>
+    <a href="/student/dashboard" class="sb-item active"><i class="fas fa-th-large"></i>Dashboard</a>
+    <a href="/student/attendance" class="sb-item"><i class="fas fa-calendar-check"></i>Full Attendance</a>
+    <span class="sb-section">Reports</span>
+    <a href="/student/excel" class="sb-item"><i class="fas fa-file-excel"></i>Download Excel</a>
+  </nav>
+  <div class="sb-footer">
+    <a href="/student/logout"><i class="fas fa-sign-out-alt"></i> Exit Portal</a>
+  </div>
+</aside>
+<div class="main">
+  <div class="topbar">
+    <h2>Class {{ class_name }}-{{ section }} — Attendance Overview</h2>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="role-badge"><i class="fas fa-user-graduate"></i> Student View</span>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info"><p>{{ total_students }}</p><span>Total Students</span></div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+        <div class="stat-info"><p>{{ total_days }}</p><span>Working Days</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-sun"></i></div>
+        <div class="stat-info"><p>{{ today_fn_present }}</p><span>Today FN Present</span></div>
+      </div>
+      <div class="stat-card danger">
+        <div class="stat-icon"><i class="fas fa-moon"></i></div>
+        <div class="stat-info"><p>{{ today_fn_absent }}</p><span>Today FN Absent</span></div>
+      </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="filter-bar">
+      <label><i class="fas fa-calendar"></i> Filter by Date:</label>
+      <input type="date" id="dateFilter" class="form-control" style="width:180px" value="{{ date_filter }}"
+             onchange="window.location='/student/dashboard?date='+this.value"/>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="/student/excel?date={{ date_filter }}" class="btn btn-success btn-sm">
+          <i class="fas fa-file-excel"></i>Download This Date
+        </a>
+        <a href="/student/excel" class="btn btn-outline btn-sm">
+          <i class="fas fa-file-excel"></i>Full Excel
+        </a>
+      </div>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-list-check" style="color:var(--teal)"></i>
+          Attendance — {{ date_filter }}
+        </h3>
+        <span style="font-size:12px;color:var(--muted)">{{ records|length }} student(s) · Read-only</span>
+      </div>
+      {% if records %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Roll No</th>
+              <th>Name</th>
+              <th>FN</th>
+              <th>AN</th>
+              <th>Total Present</th>
+              <th>Total Sessions</th>
+              <th>Attendance %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in records %}
+            <tr>
+              <td style="color:var(--muted)">{{ loop.index }}</td>
+              <td style="font-weight:500">{{ r.roll_no }}</td>
+              <td><strong>{{ r.name }}</strong></td>
+              <td>
+                <span class="badge {% if r.fn_status == 'P' %}badge-p{% else %}badge-ab{% endif %}">
+                  {{ r.fn_status or 'Ab' }}
+                </span>
+              </td>
+              <td>
+                <span class="badge {% if r.an_status == 'P' %}badge-p{% else %}badge-ab{% endif %}">
+                  {{ r.an_status or 'Ab' }}
+                </span>
+              </td>
+              <td style="font-weight:600;color:var(--success)">{{ r.total_present }}</td>
+              <td style="color:var(--muted)">{{ r.total_sessions }}</td>
+              <td>
+                {% if r.pct >= 75 %}
+                  <span class="pct-high">{{ r.pct }}%</span>
+                {% elif r.pct >= 60 %}
+                  <span class="pct-mid">{{ r.pct }}%</span>
+                {% else %}
+                  <span class="pct-low">{{ r.pct }}%</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:48px;color:var(--muted)">
+        <i class="fas fa-calendar-xmark" style="font-size:36px;margin-bottom:12px;display:block;opacity:.3"></i>
+        No attendance records for {{ date_filter }}.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Date History -->
+    {% if all_dates %}
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-history" style="color:var(--muted)"></i>Date History</h3></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        {% for d in all_dates %}
+        <a href="/student/dashboard?date={{ d.date }}"
+           style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;text-decoration:none;
+                  {% if d.date == date_filter %}background:var(--teal);color:#fff;{% else %}background:#f1f5f9;color:var(--muted);{% endif %}">
+          {{ d.date }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+</body>
+</html>

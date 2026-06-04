@@ -1,17 +1,14 @@
-import cognitive_face as CF
-import global_variables as global_var
-import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import sqlite3
 
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-Key = global_var.key
-
-CF.Key.set(Key)
-
-BASE_URL = global_var.BASE_URL  # Replace with your regional Base URL
-CF.BaseUrl.set(BASE_URL)
-
-
-res = CF.person_group.get_status(global_var.personGroupId)
-print(res)
+def status():
+    connect = sqlite3.connect("Face-DataBase")
+    try:
+        cursor = connect.execute("SELECT trained_at FROM TrainLog LIMIT 1")
+        row = cursor.fetchone()
+        connect.close()
+        if row:
+            return row[0]
+        return "Model not trained yet."
+    except:
+        connect.close()
+        return "Model not trained yet."

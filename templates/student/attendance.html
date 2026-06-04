@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AttendEase — Full Attendance</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<style>
+:root{--teal:#0d9488;--teal-light:#f0fdfa;--teal-dark:#0f766e;--success:#16a34a;--danger:#dc2626;--warning:#d97706;--bg:#f8fafc;--sidebar:#0f172a;--sidebar-hover:rgba(255,255,255,0.08);--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,0.08);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:256px;background:var(--sidebar);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.sb-logo h1{color:#fff;font-size:20px;font-weight:700;}
+.sb-logo h1 span{color:#6ee7b7;}
+.sb-logo p{color:rgba(255,255,255,0.4);font-size:11px;margin-top:2px;}
+.sb-user{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px;}
+.sb-avatar{width:36px;height:36px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px;flex-shrink:0;}
+.sb-user-info p{color:#fff;font-size:13px;font-weight:500;}
+.sb-user-info span{color:rgba(255,255,255,0.4);font-size:11px;}
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto;}
+.sb-section{padding:10px 20px 4px;color:rgba(255,255,255,0.25);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,0.6);text-decoration:none;font-size:13px;font-weight:500;transition:.2s;border-left:3px solid transparent;margin:1px 0;}
+.sb-item:hover,.sb-item.active{background:var(--sidebar-hover);color:#fff;border-left-color:#6ee7b7;}
+.sb-item i{width:16px;text-align:center;font-size:13px;}
+.sb-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.07);}
+.sb-footer a{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.5);text-decoration:none;font-size:13px;transition:.2s;}
+.sb-footer a:hover{color:#fff;}
+.main{margin-left:256px;flex:1;display:flex;flex-direction:column;}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:var(--shadow);}
+.topbar h2{font-size:17px;font-weight:600;}
+.role-badge{background:var(--teal-light);color:var(--teal);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;}
+.content{padding:24px 28px;flex:1;}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.card-header h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#f8fafc;padding:9px 12px;text-align:center;font-weight:600;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap;}
+th.left{text-align:left;}
+td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:center;}
+td.left{text-align:left;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafafa;}
+.badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+.badge-p{background:#dcfce7;color:#15803d;}
+.badge-ab{background:#fee2e2;color:#b91c1c;}
+.pct-high{background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.pct-mid{background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.pct-low{background:#fee2e2;color:#b91c1c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer;border:none;text-decoration:none;transition:.2s;font-family:'Inter',sans-serif;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#15803d;}
+.btn-outline{background:transparent;color:var(--teal);border:1px solid var(--teal);}
+.btn-outline:hover{background:var(--teal);color:#fff;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+@media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sb-logo">
+    <h1>Attend<span>Ease</span></h1>
+    <p>Student Portal</p>
+  </div>
+  <div class="sb-user">
+    <div class="sb-avatar"><i class="fas fa-user-graduate" style="font-size:15px"></i></div>
+    <div class="sb-user-info">
+      <p>Class {{ class_name }} — {{ section }}</p>
+      <span>Year {{ year }}</span>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <span class="sb-section">Attendance</span>
+    <a href="/student/dashboard" class="sb-item"><i class="fas fa-th-large"></i>Dashboard</a>
+    <a href="/student/attendance" class="sb-item active"><i class="fas fa-calendar-check"></i>Full Attendance</a>
+    <span class="sb-section">Reports</span>
+    <a href="/student/excel" class="sb-item"><i class="fas fa-file-excel"></i>Download Excel</a>
+  </nav>
+  <div class="sb-footer">
+    <a href="/student/logout"><i class="fas fa-sign-out-alt"></i> Exit Portal</a>
+  </div>
+</aside>
+<div class="main">
+  <div class="topbar">
+    <h2>Full Attendance — Class {{ class_name }}-{{ section }}</h2>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <a href="/student/excel" class="btn btn-success btn-sm"><i class="fas fa-file-excel"></i>Download Excel</a>
+      <span class="role-badge"><i class="fas fa-user-graduate"></i> Student View</span>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-table" style="color:var(--teal)"></i>Complete Attendance Register</h3>
+        <span style="font-size:12px;color:var(--muted)">{{ students|length }} students · {{ session_cols|length }} sessions · Read-only</span>
+      </div>
+      {% if students %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="left">Roll No</th>
+              <th class="left">Name</th>
+              {% for col in session_cols %}
+              <th>{{ col.date }}<br><span style="font-size:9px">{{ col.stype }}</span></th>
+              {% endfor %}
+              <th>Total<br>Present</th>
+              <th>Total<br>Sessions</th>
+              <th>Attendance<br>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in students %}
+            <tr>
+              <td class="left" style="font-weight:500;color:var(--muted)">{{ s.roll_no }}</td>
+              <td class="left"><strong>{{ s.name }}</strong></td>
+              {% for col in session_cols %}
+              {% set status = s.att.get(col.key, 'Ab') %}
+              <td>
+                <span class="badge {% if status == 'P' %}badge-p{% else %}badge-ab{% endif %}">{{ status }}</span>
+              </td>
+              {% endfor %}
+              <td style="font-weight:700;color:var(--success)">{{ s.total_present }}</td>
+              <td style="color:var(--muted)">{{ s.total_sessions }}</td>
+              <td>
+                {% if s.pct >= 75 %}
+                  <span class="pct-high">{{ s.pct }}%</span>
+                {% elif s.pct >= 60 %}
+                  <span class="pct-mid">{{ s.pct }}%</span>
+                {% else %}
+                  <span class="pct-low">{{ s.pct }}%</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:48px;color:var(--muted)">
+        <i class="fas fa-calendar-xmark" style="font-size:36px;margin-bottom:12px;display:block;opacity:.3"></i>
+        No attendance records found for this class.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+</body>
+</html>

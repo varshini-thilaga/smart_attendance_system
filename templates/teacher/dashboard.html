@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block page_title %}Teacher Dashboard{% endblock %}
+{% block sidebar %}
+<a href="/teacher" class="nav-item active"><i class="fas fa-th-large"></i> Dashboard</a>
+<a href="/teacher/mark" class="nav-item"><i class="fas fa-camera"></i> Mark Attendance</a>
+<a href="/teacher/enroll" class="nav-item"><i class="fas fa-user-plus"></i> Enroll Student</a>
+{% endblock %}
+{% block content %}
+<div class="alert alert-info"><i class="fas fa-info-circle"></i> Welcome, <strong>{{ session.full_name }}</strong>! Upload a class photo to mark attendance automatically.</div>
+<div class="stat-grid">
+  <div class="stat-card"><div class="stat-icon"><i class="fas fa-calendar-check"></i></div><div class="stat-info"><p>{{ records|length }}</p><span>Recent Records</span></div></div>
+  <div class="stat-card green"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-info"><p>{{ records|selectattr('status','eq','P')|list|length }}</p><span>Present</span></div></div>
+  <div class="stat-card orange"><div class="stat-icon"><i class="fas fa-times-circle"></i></div><div class="stat-info"><p>{{ records|selectattr('status','eq','Ab')|list|length }}</p><span>Absent</span></div></div>
+</div>
+<div class="card">
+  <div class="card-header"><h3>Recent Attendance</h3><a href="/teacher/mark" class="btn btn-primary btn-sm"><i class="fas fa-camera"></i> Mark Now</a></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Roll No</th><th>Class</th><th>Date</th><th>Session</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td><strong>{{ r.name }}</strong></td><td>{{ r.roll_no }}</td>
+          <td>{{ r.class_name }} {{ r.section }}</td><td>{{ r.date }}</td>
+          <td>{{ r.session }}</td>
+          <td><span class="badge-role {% if r.status == 'P' %}badge-p{% else %}badge-ab{% endif %}">{{ r.status }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:30px;">No records yet. Mark attendance to get started.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
